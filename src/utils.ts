@@ -1,7 +1,6 @@
-import { VercelRequest } from "@vercel/node";
-import { DiscordMessage, SubscriptionType } from "./interfaces";
+import { DiscordMessage, SubscriptionType } from "./interfaces.js";
 
-export function discordMessage(req: VercelRequest) {
+export function discordMessage(rawBody: string) {
   let message: DiscordMessage = {
     embeds: [{ color: 9520895 }],
   };
@@ -14,7 +13,7 @@ export function discordMessage(req: VercelRequest) {
       title: string;
       category_name: string;
     };
-  } = req.body;
+  } = JSON.parse(rawBody);
 
   switch (body.subscription.type) {
     case SubscriptionType.StreamOnline:

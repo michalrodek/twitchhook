@@ -1,11 +1,11 @@
-import { VercelRequest } from "@vercel/node";
 import crypto from "crypto";
 
-export function isRequestVerified(req: VercelRequest) {
+export function isRequestVerified(req: Request, body: string) {
   const secret = process.env.SECRET;
-  const message = getHmacMessage(req);
-  const signature =
-    req.headers["Twitch-Eventsub-Message-Signature".toLowerCase()];
+  const message = getHmacMessage(req, body);
+  const signature = req.headers.get(
+    "Twitch-Eventsub-Message-Signature".toLowerCase()
+  );
 
   if (!message || !secret || typeof signature !== "string") {
     return false;
@@ -25,15 +25,15 @@ export function isRequestVerified(req: VercelRequest) {
   return true;
 }
 
-function getHmacMessage(request: VercelRequest) {
-  const id = request.headers["Twitch-Eventsub-Message-Id".toLowerCase()];
-  const timestamp =
-    request.headers["Twitch-Eventsub-Message-Timestamp".toLowerCase()];
-  const body = request.body;
+function getHmacMessage(request: Request, body: string) {
+  const id = request.headers.get("Twitch-Eventsub-Message-Id".toLowerCase());
+  const timestamp = request.headers.get(
+    "Twitch-Eventsub-Message-Timestamp".toLowerCase()
+  );
 
   if (typeof id !== "string") return;
 
-  return id + timestamp + JSON.stringify(body);
+  return id + timestamp + body;
 }
 
 function getHmac(secret: string, message: string) {

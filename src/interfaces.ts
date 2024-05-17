@@ -1,8 +1,3 @@
-export interface APIResponse<T> {
-  data?: T;
-  error?: string;
-}
-
 export interface DiscordMessage {
   embeds?: {
     title?: string;

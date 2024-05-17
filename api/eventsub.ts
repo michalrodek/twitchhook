@@ -1,44 +1,44 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { typedFetch } from "../src/fetching";
-import { MessageType } from "../src/interfaces";
-import { discordMessage } from "../src/utils";
-import { isRequestVerified } from "../src/verify";
+import { executeWebhook } from "../src/fetching.js";
+import { MessageType } from "../src/interfaces.js";
+import { discordMessage } from "../src/utils.js";
+import { isRequestVerified } from "../src/verify.js";
 
-export default async function (req: VercelRequest, res: VercelResponse) {
-  if (!isRequestVerified(req)) return res.status(403).send("error");
+export async function POST(req: Request) {
+  const body = await req.text();
 
-  const messageType = req.headers["Twitch-Eventsub-Message-Type".toLowerCase()];
+  if (!isRequestVerified(req, body)) {
+    return new Response("error", { status: 403 });
+  }
+
+  const messageType = req.headers.get(
+    "Twitch-Eventsub-Message-Type".toLowerCase()
+  );
 
   switch (messageType) {
     case MessageType.WebhookCallbackVerification:
-      handleCallbackVerification(req, res);
-      break;
+      return handleCallbackVerification(req, body);
 
     case MessageType.Notification:
-      await handleNotification(req, res);
-      break;
+      return await handleNotification(body);
 
     default:
-      return res.status(403).send("error");
+      return new Response("error", { status: 403 });
   }
 }
 
-async function handleNotification(req: VercelRequest, res: VercelResponse) {
-  const message = discordMessage(req);
+async function handleNotification(body: string) {
+  const message = discordMessage(body);
 
-  await typedFetch(String(process.env.WEBHOOK), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(message),
-  });
+  await executeWebhook(JSON.stringify(message));
 
-  return res.status(204).send("");
+  return new Response(null, { status: 204 });
 }
 
-function handleCallbackVerification(req: VercelRequest, res: VercelResponse) {
-  res.setHeader("Content-Type", "text/plain");
+function handleCallbackVerification(req: Request, rawBody: string) {
+  const body: { challenge: string } = JSON.parse(rawBody);
 
-  const body: { challenge: string } = req.body;
-
-  return res.status(200).send(body.challenge);
+  return new Response(body.challenge, {
+    status: 200,
+    headers: { "Content-Type": "text/plain" },
+  });
 }
