@@ -15,6 +15,9 @@ export function discordMessage(rawBody: string) {
     };
   } = JSON.parse(rawBody);
 
+  const broadcasterName = escape(body.event.broadcaster_user_name);
+  const title = escape(body.event.title);
+
   switch (body.subscription.type) {
     case SubscriptionType.StreamOnline:
       message = {
@@ -22,7 +25,7 @@ export function discordMessage(rawBody: string) {
         embeds: [
           {
             ...message.embeds?.[0],
-            title: body.event.broadcaster_user_name,
+            title: broadcasterName,
             url: `https://www.twitch.tv/${body.event.broadcaster_user_login}`,
             description: "je online!",
           },
@@ -36,7 +39,7 @@ export function discordMessage(rawBody: string) {
         embeds: [
           {
             ...message.embeds?.[0],
-            description: `${body.event.broadcaster_user_name} je offline`,
+            description: `${broadcasterName} je offline`,
           },
         ],
       };
@@ -48,7 +51,7 @@ export function discordMessage(rawBody: string) {
         embeds: [
           {
             ...message.embeds?.[0],
-            description: `Update streamu **${body.event.broadcaster_user_name}**\n${body.event.title} - ${body.event.category_name}`,
+            description: `Update streamu **${broadcasterName}**\n${title} - ${body.event.category_name}`,
           },
         ],
       };
@@ -59,4 +62,13 @@ export function discordMessage(rawBody: string) {
   }
 
   return message;
+}
+
+function escape(string: string) {
+  return string
+    .replace(/\*/g, "\\*")
+    .replace(/_/g, "\\_")
+    .replace(/~/g, "\\~")
+    .replace(/\|/g, "\\|")
+    .replace(/`/g, "\\`");
 }
