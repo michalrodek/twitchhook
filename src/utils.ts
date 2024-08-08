@@ -16,7 +16,6 @@ export function discordMessage(rawBody: string) {
   } = JSON.parse(rawBody);
 
   const broadcasterName = escape(body.event.broadcaster_user_name);
-  const title = escape(body.event.title);
 
   switch (body.subscription.type) {
     case SubscriptionType.StreamOnline:
@@ -46,6 +45,8 @@ export function discordMessage(rawBody: string) {
       break;
 
     case SubscriptionType.ChannelUpdate:
+      const title = escape(body.event.title);
+
       message = {
         ...message,
         embeds: [
